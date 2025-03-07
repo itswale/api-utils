@@ -42,7 +42,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers as root and verify installation
+# Install Playwright browsers as root and verify
 RUN playwright install chromium && \
     ls -la /root/.cache/ms-playwright/ && \
     python -c "from playwright.sync_api import sync_playwright; with sync_playwright() as p: browser = p.chromium.launch(headless=True); browser.close()" || { echo "Chromium launch failed during build"; exit 1; }
