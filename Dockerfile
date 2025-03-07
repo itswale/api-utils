@@ -5,13 +5,14 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install system dependencies required for Playwright and Chromium
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
     libdrm2 \
+    libdbus-1-3 \
     libatspi2.0-0 \
     libxcomposite1 \
     libxdamage1 \
@@ -23,7 +24,6 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libcairo2 \
     libasound2 \
-    libdbus-1-3 \
     libegl1 \
     libfontconfig1 \
     fonts-liberation \
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     xfonts-base \
     xfonts-scalable \
     xvfb \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file first (optimization for caching)
 COPY requirements.txt .
@@ -41,11 +41,16 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers as root
-RUN playwright install chromium
+# Install Playwright browsers and verify
+RUN playwright install chromium && \
+    ls -la /root/.cache/ms-playwright/ && \
+    python -c "from playwright.sync_api import sync_playwright; with sync_playwright() as p: browser = p.chromium.launch(headless=True); browser.close()" || { echo "Chromium launch failed during build"; exit 1; }
 
 # Create a non-root user and switch to it
-RUN useradd -m -r appuser && chown appuser:appuser /app
+RUN useradd -m -r appuser && \
+    mkdir -p /home/appuser/.cache/ms-playwright && \
+    cp -r /root/.cache/ms-playwright/* /home/appuser/.cache/ms-playwright/ && \
+    chown -R appuser:appuser /home/appuser/.cache/ms-playwright /app
 USER appuser
 
 # Copy the rest of your application code
