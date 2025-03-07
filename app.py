@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 import subprocess
 import os
 
-# Check and install Playwright browsers
+# Ensure Playwright browsers are installed on startup
 def ensure_playwright_browsers():
     playwright_dir = os.path.expanduser("~/.cache/ms-playwright")
     chromium_dir = os.path.join(playwright_dir, "chromium-1105")  # Adjust version if needed
@@ -17,20 +17,10 @@ def ensure_playwright_browsers():
             subprocess.run(["playwright", "install", "chromium"], check=True)
             st.success("Playwright Chromium installed successfully!")
         except subprocess.CalledProcessError as e:
-            st.error(f"Failed to install Playwright browsers: {e}. UI tests may not work. Contact the app administrator.")
-            return False
-    # Verify Chromium can launch
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            browser.close()
-        return True
-    except Exception as e:
-        st.error(f"UI testing setup failed: {str(e)}. UI tests are unavailable. Contact the app administrator.")
-        return False
+            st.error(f"Failed to install Playwright browsers: {e}. UI tests may not work. Please contact support.")
 
-# Run on startup and set UI test availability
-UI_TESTS_AVAILABLE = ensure_playwright_browsers()
+# Run this on app startup
+ensure_playwright_browsers()
 
 # Initialize session state
 if "saved_tests" not in st.session_state:
@@ -41,9 +31,6 @@ if "api_response" not in st.session_state:
 # Cached Playwright test function with all enhancements
 @st.cache_data
 def run_playwright_tests(url, tests_to_run, search_text="", custom_selector=""):
-    if not UI_TESTS_AVAILABLE:
-        return {"error": "UI testing is currently unavailable due to server setup issues. Please try API tests or contact the app administrator."}
-    
     results = {}
     try:
         with sync_playwright() as p:
@@ -119,7 +106,7 @@ def run_playwright_tests(url, tests_to_run, search_text="", custom_selector=""):
         elif "Host system is missing dependencies" in error_msg:
             return {"error": "The server is missing required components to run UI tests. Please contact the app administrator to resolve this issue."}
         else:
-            return {"error": f"An unexpected error occurred while testing the UI: {error_msg}. Try a different URL or reset the test."}
+            return {"error": f"An unexpected error occurred: {error_msg}. Try a different URL or reset the test."}
     return results
 
 # Streamlit app layout
@@ -133,8 +120,6 @@ menu = st.sidebar.radio("Navigate", ["Test API & UI", "Saved Tests"], help="Swit
 if menu == "Test API & UI":
     st.title("API & UI Tester")
     st.write("Test APIs and webpages with ease.")
-    if not UI_TESTS_AVAILABLE:
-        st.warning("UI testing is currently unavailable due to server setup issues. API testing is still functional.")
 
     # Two-column layout
     col1, col2 = st.columns([2, 3])
@@ -192,12 +177,12 @@ if menu == "Test API & UI":
         ui_url = st.text_input("Webpage URL", value="https://example.com", help="Enter a webpage URL to test.")
         ui_tests = st.multiselect("Select UI Tests", 
                                  ["title", "status", "header", "footer", "links", "images", "text", "load_time", "forms", "custom", "screenshot", "accessibility"], 
-                                 default=["title"], help="Choose what to check on the webpage.", disabled=not UI_TESTS_AVAILABLE)
+                                 default=["title"], help="Choose what to check on the webpage.")
         search_text = st.text_input("Search Text (for 'text' test)", "", 
-                                   help="Enter text to search for if 'text' is selected.", disabled=not UI_TESTS_AVAILABLE) if "text" in ui_tests else ""
+                                   help="Enter text to search for if 'text' is selected.") if "text" in ui_tests else ""
         custom_selector = st.text_input("Custom CSS Selector (for 'custom' test)", "", 
-                                       help="Enter a selector like '#id' or '.class' if 'custom' is selected.", disabled=not UI_TESTS_AVAILABLE) if "custom" in ui_tests else ""
-        if st.button("Run UI Test", help="Test the webpage with selected options.", disabled=not UI_TESTS_AVAILABLE):
+                                       help="Enter a selector like '#id' or '.class' if 'custom' is selected.") if "custom" in ui_tests else ""
+        if st.button("Run UI Test", help="Test the webpage with selected options."):
             st.session_state.ui_results = run_playwright_tests(ui_url, ui_tests, search_text, custom_selector)
             test_config = {
                 "type": "ui",
@@ -287,7 +272,7 @@ elif menu == "Saved Tests":
                         st.write(f"**Search Text**: {test['search_text']}")
                     if test.get("custom_selector"):
                         st.write(f"**Custom Selector**: {test['custom_selector']}")
-                    if st.button(f"Run {test['name']}", help="Re-run this UI test.", disabled=not UI_TESTS_AVAILABLE):
+                    if st.button(f"Run {test['name']}", help="Re-run this UI test."):
                         with st.spinner("Running UI test..."):
                             results = run_playwright_tests(test["url"], test["tests"], 
                                                           test.get("search_text", ""), test.get("custom_selector", ""))
