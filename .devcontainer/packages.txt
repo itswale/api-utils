@@ -12,10 +12,15 @@ libxrandr2
 libgbm1
 libxkbcommon0
 libpango-1.0-0
+libpangocairo-1.0-0  # Added for font rendering
 libcairo2
 libasound2
+libdbus-1-3          # Added for system bus
+libegl1              # Added for graphics
+libfontconfig1       # Added for fonts
 fonts-liberation
 libu2f-udev
 libvulkan1
 xfonts-base
 xfonts-scalable
+xvfb                 # Added for headless display support
