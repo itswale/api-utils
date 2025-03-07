@@ -17,7 +17,7 @@ def ensure_playwright_browsers():
             subprocess.run(["playwright", "install", "chromium"], check=True)
             st.success("Playwright Chromium installed successfully!")
         except subprocess.CalledProcessError as e:
-            st.error(f"Failed to install Playwright browsers: {e}. UI tests may not work.")
+            st.error(f"Failed to install Playwright browsers: {e}. UI tests may not work. Please contact support.")
 
 # Run this on app startup
 ensure_playwright_browsers()
@@ -100,11 +100,13 @@ def run_playwright_tests(url, tests_to_run, search_text="", custom_selector=""):
     except Exception as e:
         error_msg = str(e)
         if "Timeout" in error_msg:
-            return {"error": "The site took too long to load. Check the URL or try again later."}
+            return {"error": "The site took too long to load. Please check the URL or try again later."}
         elif "net::ERR" in error_msg:
-            return {"error": "Couldn’t connect to the site. Make sure the URL is correct and the site is online."}
+            return {"error": "Couldn’t connect to the site. Please ensure the URL is correct and the site is online."}
+        elif "Host system is missing dependencies" in error_msg:
+            return {"error": "The server is missing required components to run UI tests. Please contact the app administrator to resolve this issue."}
         else:
-            return {"error": f"Something went wrong: {error_msg}. Try a different URL or reset the test."}
+            return {"error": f"An unexpected error occurred: {error_msg}. Try a different URL or reset the test."}
     return results
 
 # Streamlit app layout
