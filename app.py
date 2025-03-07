@@ -4,7 +4,23 @@ import time
 import json
 import base64
 from playwright.sync_api import sync_playwright
+import subprocess
 import os
+
+# Ensure Playwright browsers are installed on startup
+def ensure_playwright_browsers():
+    playwright_dir = os.path.expanduser("~/.cache/ms-playwright")
+    chromium_dir = os.path.join(playwright_dir, "chromium-1105")  # Adjust version if needed
+    if not os.path.exists(chromium_dir):
+        try:
+            st.info("Installing Playwright Chromium browser... This may take a moment on first run.")
+            subprocess.run(["playwright", "install", "chromium"], check=True)
+            st.success("Playwright Chromium installed successfully!")
+        except subprocess.CalledProcessError as e:
+            st.error(f"Failed to install Playwright browsers: {e}. UI tests may not work.")
+
+# Run this on app startup
+ensure_playwright_browsers()
 
 # Initialize session state
 if "saved_tests" not in st.session_state:
