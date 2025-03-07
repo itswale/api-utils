@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfonts-base \
     xfonts-scalable \
     xvfb \
+    ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file first (optimization for caching)
@@ -41,12 +42,12 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers and verify
+# Install Playwright browsers as root and verify installation
 RUN playwright install chromium && \
     ls -la /root/.cache/ms-playwright/ && \
     python -c "from playwright.sync_api import sync_playwright; with sync_playwright() as p: browser = p.chromium.launch(headless=True); browser.close()" || { echo "Chromium launch failed during build"; exit 1; }
 
-# Create a non-root user and switch to it
+# Create a non-root user and copy Playwright binaries
 RUN useradd -m -r appuser && \
     mkdir -p /home/appuser/.cache/ms-playwright && \
     cp -r /root/.cache/ms-playwright/* /home/appuser/.cache/ms-playwright/ && \
