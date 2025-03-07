@@ -12,16 +12,6 @@ if "saved_tests" not in st.session_state:
 if "api_response" not in st.session_state:
     st.session_state.api_response = None
 
-# Install Playwright browsers on startup
-def install_playwright():
-    if not os.path.exists("/tmp/playwright_installed"):  # Check if already installed
-        with sync_playwright() as p:
-            p.chromium.launch()  # This triggers browser installation
-        with open("/tmp/playwright_installed", "w") as f:
-            f.write("installed")  # Mark as done
-
-install_playwright()
-
 # Cached Playwright test function with all enhancements
 @st.cache_data
 def run_playwright_tests(url, tests_to_run, search_text="", custom_selector=""):
