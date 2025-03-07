@@ -7,6 +7,9 @@ from playwright.sync_api import sync_playwright
 import subprocess
 import os
 
+# Set page config as the first Streamlit command
+st.set_page_config(page_title="API Testing Utility", layout="wide")
+
 # Ensure Playwright browsers are installed on startup
 def ensure_playwright_browsers():
     playwright_dir = os.path.expanduser("~/.cache/ms-playwright")
